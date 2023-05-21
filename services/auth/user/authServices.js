@@ -540,10 +540,25 @@ const deleteActivity = async (activityId) => {
 
 const getAllActivities = async () => {
   try {
+    // Retrieve all activities from the database
+    const activities = await Activity.find();
+
+    if (!activities) {
+      return errorResponse(HTTP_STATUS.NOT_FOUND, "NO_ACTIVITIES_FOUND", null);
+    }
+
+    // Return the activities as a success response
+    return successResponse(
+      activities,
+      HTTP_STATUS.OK,
+      "ACTIVITY.GET_ALL_SUCCESSFULLY"
+    );
   } catch (error) {
+    // Error handling code
+    console.error(error);
     return errorResponse(
       HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      error?.message,
+      "INTERNAL_SERVER_ERROR",
       null
     );
   }
