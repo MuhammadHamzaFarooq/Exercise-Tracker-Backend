@@ -85,7 +85,6 @@ const login = async (data) => {
         let payload = {
           _id: user?._id,
           email: user?.email,
-          password: hasPassword,
         };
 
         if (isMatch) {
