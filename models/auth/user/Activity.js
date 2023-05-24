@@ -1,6 +1,7 @@
-import mongoose from "mongoose";
+import { mongoose, Schema } from "mongoose";
 
 const activitySchema = new mongoose.Schema({
+  user_id: [{ type: Schema.Types.ObjectId, ref: "User" }],
   name: {
     type: String,
     required: true,

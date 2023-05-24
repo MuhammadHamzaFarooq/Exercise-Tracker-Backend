@@ -378,11 +378,27 @@ const ResetPasswordVerify = async (data) => {
 
 const createActivity = async (data) => {
   try {
-    const { name, description, date, duration, activityType, startTime } = data;
+    const {
+      name,
+      description,
+      date,
+      duration,
+      activityType,
+      startTime,
+      endTime,
+    } = data;
 
     // Check if all required fields are present
-    if (name && description && date && duration && activityType && startTime) {
-      let endTime = calculateEndTime(startTime, duration); // Calculate the end time based on the duration
+    if (
+      name &&
+      description &&
+      date &&
+      duration &&
+      activityType &&
+      startTime &&
+      endTime
+    ) {
+      // let endTime = calculateEndTime(startTime, duration); // Calculate the end time based on the duration
       // Find activities with the same date and overlapping duration
       let allActivities = await Activity.find({
         date,
@@ -416,7 +432,6 @@ const createActivity = async (data) => {
             null
           );
         }
-
         return successResponse(
           newActivity,
           HTTP_STATUS.OK,
