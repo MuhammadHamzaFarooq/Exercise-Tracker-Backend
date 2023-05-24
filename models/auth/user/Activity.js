@@ -19,15 +19,15 @@ const activitySchema = new mongoose.Schema({
     required: true,
   },
   date: {
-    type: Date,
+    type: String,
     default: undefined,
   },
   startTime: {
-    type: Date,
+    type: String,
     required: true,
   },
   endTime: {
-    type: Date,
+    type: String,
     required: true,
   },
   createdAt: {
