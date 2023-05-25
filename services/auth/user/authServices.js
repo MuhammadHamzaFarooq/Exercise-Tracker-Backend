@@ -521,6 +521,7 @@ const createActivity = async (req) => {
       return errorResponse(HTTP_STATUS.OK, "ALL FIELDS REQUIRED", null);
     }
   } catch (error) {
+    console.log(error);
     return errorResponse(
       HTTP_STATUS.INTERNAL_SERVER_ERROR,
       error?.message,
@@ -543,9 +544,16 @@ const calculateEndTime = (startTime, duration) => {
 
 const editActivity = async (activityId, newData) => {
   try {
-    const { name, description, date, duration, activityType, startTime } =
-      newData;
-    let endTime = calculateEndTime(startTime, duration); // Calculate the end time based on the duration
+    const {
+      name,
+      description,
+      date,
+      duration,
+      activityType,
+      startTime,
+      endTime,
+    } = newData;
+    // let endTime = calculateEndTime(startTime, duration); // Calculate the end time based on the duration
 
     // Find the activity by its ID
     let activity = await Activity.findById(activityId);
