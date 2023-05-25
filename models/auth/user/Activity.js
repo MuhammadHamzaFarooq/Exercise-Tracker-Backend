@@ -30,6 +30,10 @@ const activitySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  activityType: {
+    type: String,
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
