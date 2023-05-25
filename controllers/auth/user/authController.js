@@ -28,7 +28,7 @@ const ResetPasswordVerify = async (req, res) => {
 
 // Activity Api's
 const createActivity = async (req, res) => {
-  const response = await authServices.createActivity(req.body);
+  const response = await authServices.createActivity(req);
   return constructResponse(res, response);
 };
 
@@ -43,7 +43,7 @@ const deleteActivity = async (req, res) => {
 };
 
 const getAllActivities = async (req, res) => {
-  const response = await authServices.getAllActivities();
+  const response = await authServices.getAllActivities(req);
   return constructResponse(res, response);
 };
 

@@ -11,6 +11,7 @@ import request from "request";
 import { cloudinaryOptions } from "../../../utils/staticObject.js";
 import { helper } from "../../../utils/helperFunctions.js";
 import Activity from "../../../models/auth/user/Activity.js";
+import mongoose from "mongoose";
 
 const register = async (data) => {
   try {
@@ -376,7 +377,7 @@ const ResetPasswordVerify = async (data) => {
   }
 };
 
-const createActivity = async (data) => {
+const createActivity = async (req) => {
   try {
     const {
       name,
@@ -386,7 +387,7 @@ const createActivity = async (data) => {
       activityType,
       startTime,
       endTime,
-    } = data;
+    } = req.body;
 
     // Check if all required fields are present
     if (
@@ -413,30 +414,102 @@ const createActivity = async (data) => {
 
       // Check if any activities were found
       if (allActivities.length === 0) {
-        // Create a new activity
-        let newActivity = await Activity.create({
-          name,
-          description,
-          date,
-          duration,
-          activityType,
-          startTime,
-          endTime,
-        });
+        let token;
+        const { authorization } = req.headers;
+        if (authorization && authorization.startsWith("Bearer")) {
+          try {
+            token = authorization.split(" ")[1];
+            if (!token) {
+              return errorResponse(
+                httpStatus.UNAUTHORIZED,
+                "UNAUTHORIZED.USER",
+                null
+              );
+            } else {
+              // Verify Token
+              const { email } = jwt.verify(token, process.env.JWT_SECRET);
+              // Get User from Token
+              let user = await User.findOne({ email });
+              if (user) {
+                if (!mongoose.Types.ObjectId.isValid(user._id)) {
+                  return errorResponse(
+                    HTTP_STATUS.BAD_REQUEST,
+                    "Invalid user ID",
+                    null
+                  );
+                }
+                let url = "";
+                console.log("activityType => ", activityType);
+                switch (activityType) {
+                  case "Run":
+                    url =
+                      "https://res.cloudinary.com/ddpxcjmjn/image/upload/v1684683136/Exercise%20Tracker%20Dashboard/runing_man_generated_dfog6w.jpg";
+                    break;
+                  case "Swim":
+                    url =
+                      "https://res.cloudinary.com/ddpxcjmjn/image/upload/v1684683107/Exercise%20Tracker%20Dashboard/8si7_juh6_130430_fwsd9c.jpg";
+                    break;
+                  case "Hike":
+                    url =
+                      "https://res.cloudinary.com/ddpxcjmjn/image/upload/v1684683190/Exercise%20Tracker%20Dashboard/hiking-illustration-vector_bigs43.jpg";
+                    break;
+                  case "Bicycle Ride":
+                    url =
+                      "https://res.cloudinary.com/ddpxcjmjn/image/upload/v1684684638/Exercise%20Tracker%20Dashboard/1892_R0lVIERBTiA0NDItMDc_cosxob.jpg";
+                    break;
+                  case "Walk":
+                    url =
+                      "https://res.cloudinary.com/ddpxcjmjn/image/upload/v1684683179/Exercise%20Tracker%20Dashboard/walk_and_palying_phone_flat_vector_illustration1_generated_pp1jp2.jpg";
+                    break;
+                  default:
+                    // Handle the default case or set a default URL if needed
+                    break;
+                }
 
-        if (!newActivity) {
-          console.log(error?.message);
-          return errorResponse(
-            HTTP_STATUS.INTERNAL_SERVER_ERROR,
-            "ACTIVITY ALREADY EXISTS FOR THIS DURATION",
-            null
-          );
+                // Create a new activity
+                let newActivity = await Activity.create({
+                  name,
+                  description,
+                  date,
+                  duration,
+                  activityType,
+                  startTime,
+                  endTime,
+                  user_id: user._id,
+                  url,
+                });
+
+                if (!newActivity) {
+                  console.log(error?.message);
+                  return errorResponse(
+                    HTTP_STATUS.INTERNAL_SERVER_ERROR,
+                    "ACTIVITY ALREADY EXISTS FOR THIS DURATION",
+                    null
+                  );
+                }
+                return successResponse(
+                  newActivity,
+                  HTTP_STATUS.OK,
+                  "ACTIVITY.CREATE.SUCCESSFULLY"
+                );
+              } else {
+                return errorResponse(
+                  httpStatus.UNAUTHORIZED,
+                  "UNAUTHORIZED.USER",
+                  null
+                );
+              }
+            }
+          } catch (error) {
+            // Error handling code
+            console.error(error);
+            return errorResponse(
+              HTTP_STATUS.INTERNAL_SERVER_ERROR,
+              "INTERNAL_SERVER_ERROR",
+              null
+            );
+          }
         }
-        return successResponse(
-          newActivity,
-          HTTP_STATUS.OK,
-          "ACTIVITY.CREATE.SUCCESSFULLY"
-        );
       } else {
         return errorResponse(
           HTTP_STATUS.OK,
@@ -552,21 +625,70 @@ const deleteActivity = async (activityId) => {
   }
 };
 
-const getAllActivities = async () => {
+const getAllActivities = async (req) => {
   try {
+    let token;
+    const { authorization } = req.headers;
     // Retrieve all activities from the database
-    const activities = await Activity.find();
+    if (authorization && authorization.startsWith("Bearer")) {
+      try {
+        token = authorization.split(" ")[1];
+        if (!token) {
+          return errorResponse(
+            httpStatus.UNAUTHORIZED,
+            "UNAUTHORIZED.USER",
+            null
+          );
+        } else {
+          // Verify Token
+          const { email } = jwt.verify(token, process.env.JWT_SECRET);
+          // Get User from Token
+          let user = await User.findOne({ email });
+          if (user) {
+            if (!mongoose.Types.ObjectId.isValid(user._id)) {
+              return errorResponse(
+                HTTP_STATUS.BAD_REQUEST,
+                "Invalid user ID",
+                null
+              );
+            }
+            const activities = await Activity.find({
+              user_id: user._id,
+            })
+              .populate("user_id")
+              .exec();
 
-    if (!activities) {
-      return errorResponse(HTTP_STATUS.NOT_FOUND, "NO_ACTIVITIES_FOUND", null);
+            if (!activities) {
+              return errorResponse(
+                HTTP_STATUS.NOT_FOUND,
+                "NO_ACTIVITIES_FOUND",
+                null
+              );
+            }
+            // Return the activities as a success response
+            return successResponse(
+              activities,
+              HTTP_STATUS.OK,
+              "ACTIVITY.GET_ALL_SUCCESSFULLY"
+            );
+          } else {
+            return errorResponse(
+              httpStatus.UNAUTHORIZED,
+              "UNAUTHORIZED.USER",
+              null
+            );
+          }
+        }
+      } catch (error) {
+        // Error handling code
+        console.error(error);
+        return errorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "INTERNAL_SERVER_ERROR",
+          null
+        );
+      }
     }
-
-    // Return the activities as a success response
-    return successResponse(
-      activities,
-      HTTP_STATUS.OK,
-      "ACTIVITY.GET_ALL_SUCCESSFULLY"
-    );
   } catch (error) {
     // Error handling code
     console.error(error);

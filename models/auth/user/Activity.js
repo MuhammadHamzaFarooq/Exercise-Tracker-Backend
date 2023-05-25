@@ -1,7 +1,7 @@
-import { mongoose, Schema } from "mongoose";
+import { mongoose, Schema, ObjectId } from "mongoose";
 
 const activitySchema = new mongoose.Schema({
-  user_id: { type: Schema.Types.ObjectId, ref: "User" },
+  user_id: [{ type: ObjectId, ref: "User" }],
   name: {
     type: String,
     required: true,
@@ -33,6 +33,9 @@ const activitySchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now(),
+  },
+  url: {
+    type: String,
   },
 });
 
